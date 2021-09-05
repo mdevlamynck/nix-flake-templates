@@ -1,2 +1,5 @@
 # Rust build dir
 /target/
+
+# Jetbrains
+/.idea/
