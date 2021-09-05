@@ -1,0 +1,10 @@
+[package]
+name = "bevy"
+version = "0.1.0"
+authors = ["Matthias Devlamynck <matthias.devlamynck@mailoo.org>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = { version = "0.5.0", features = ["dynamic", "wayland"] }
