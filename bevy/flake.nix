@@ -2,43 +2,67 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-21.05";
     rust-overlay.url = "github:oxalica/rust-overlay";
-    flake-utils.url  = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, rust-overlay, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        overlays = [ (import rust-overlay) ];
-        pkgs = import nixpkgs {
-          inherit system overlays;
-        };
-      in
-      {
-        devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            # Rust deps
-            (rust-bin.nightly.latest.default.override { extensions = [ "rust-src" ]; })
+  outputs = { self, nixpkgs, rust-overlay }:
+    let
+      overlays = [ (import rust-overlay) ];
+      pkgs = import nixpkgs {
+        inherit system overlays;
+      };
 
-            # Fast Compile deps
-            clang
+      system = "x86_64-linux";
+      app = "game";
 
-            # Bevy deps
-            pkgconfig udev alsaLib
-            x11 xorg.libXcursor xorg.libXrandr xorg.libXi
-            vulkan-tools vulkan-headers vulkan-loader vulkan-validation-layers
-          ];
+      shellInputs = with pkgs; [
+        (rust-bin.nightly.latest.default.override { extensions = [ "rust-src" ]; })
+        clang
+      ];
+      appNativeBuildInputs = with pkgs; [
+        pkg-config
+      ];
+      appBuildInputs = appRuntimeInputs ++ (with pkgs; [
+        udev alsaLib x11
+        vulkan-tools vulkan-headers vulkan-validation-layers
+      ]);
+      appRuntimeInputs = with pkgs; [
+        vulkan-loader
+        xlibs.libXcursor xlibs.libXi xlibs.libXrandr
+      ];
+    in
+    {
+      devShells.${system}.${app} = pkgs.mkShell {
+        nativeBuildInputs = appNativeBuildInputs;
+        buildInputs = shellInputs ++ appBuildInputs;
 
-          APPEND_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
-            vulkan-loader
-            xlibs.libXcursor
-            xlibs.libXi
-            xlibs.libXrandr
-          ];
+        shellHook = ''
+          export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath appRuntimeInputs}"
+        '';
+      };
+      devShell.${system} = self.devShells.${system}.${app};
 
-          shellHook = ''
-            export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$APPEND_LIBRARY_PATH"
-          '';
-        };
-      }
-    );
+      packages.${system}.${app} = pkgs.rustPlatform.buildRustPackage {
+        pname = app;
+        version = "0.1.0";
+
+        src = ./.;
+        cargoSha256 = "sha256-r5lStKMOQcMkcTpM++3MvuTOHYDhLOZL5sJxcUqoEf4=";
+
+        nativeBuildInputs = appNativeBuildInputs;
+        buildInputs = appBuildInputs;
+
+        postInstall = ''
+          cp -r assets $out/bin/
+        '';
+      };
+      defaultPackage.${system} = self.packages.${system}.${app};
+
+      apps.${system}.${app} = {
+        type = "app";
+        program = "${self.packages.${system}.${app}}/bin/${app}";
+      };
+      defaultApp.${system} = self.apps.${system}.${app};
+
+      checks.${system}.build = self.packages.${system}.${app};
+    };
 }
