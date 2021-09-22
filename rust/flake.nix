@@ -42,7 +42,7 @@
         version = "0.1.0";
 
         src = ./.;
-        cargoSha256 = "sha256-r5lStKMOQcMkcTpM++3MvuTOHYDhLOZL5sJxcUqoEf4=";
+        cargoSha256 = "sha256-Qrpynvev5VVds63rb1JiOdyopZKuRtzNKkLulKbvbFE=";
 
         nativeBuildInputs = appNativeBuildInputs;
         buildInputs = appBuildInputs;
