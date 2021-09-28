@@ -11,6 +11,10 @@
         path = ./gtk;
         description = "A gtk project using rust";
       };
+      qml = {
+        path = ./qml;
+        description = "A qml project using rust";
+      };
       rust = {
         path = ./rust;
         description = "A rust project";
