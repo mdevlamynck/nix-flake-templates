@@ -3,9 +3,14 @@
 
   outputs = { self }: {
     templates = {
+      default = self.templates.empty;
       bevy = {
         path = ./bevy;
         description = "A project using the Bevy game engine";
+      };
+      empty = {
+        path = ./empty;
+        description = "An empty project";
       };
       gtk = {
         path = ./gtk;
