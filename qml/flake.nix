@@ -16,7 +16,7 @@
 
       shellInputs = with pkgs; [
         (rust-bin.nightly.latest.default.override { extensions = [ "rust-src" ]; })
-        clang
+        clang mold
       ];
       appNativeBuildInputs = with pkgs; [
         pkg-config libsForQt5.qmake
