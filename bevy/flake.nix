@@ -14,9 +14,11 @@
       system = "x86_64-linux";
       app = "game";
 
+      rust = pkgs.rust-bin.nightly.latest.default.override { extensions = [ "rust-src" ]; };
+      rustPlatform = pkgs.makeRustPlatform { cargo = rust; rustc = rust; };
+
       shellInputs = with pkgs; [
-        (rust-bin.nightly.latest.default.override { extensions = [ "rust-src" ]; })
-        clang mold
+        rust clang mold
       ];
       appNativeBuildInputs = with pkgs; [
         pkg-config
@@ -37,11 +39,12 @@
 
         shellHook = ''
           export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath appRuntimeInputs}"
+          ln -fsT ${rust} ./.direnv/rust
         '';
       };
       devShell.${system} = self.devShells.${system}.${app};
 
-      packages.${system}.${app} = pkgs.rustPlatform.buildRustPackage {
+      packages.${system}.${app} = rustPlatform.buildRustPackage {
         pname = app;
         version = "0.1.0";
 
