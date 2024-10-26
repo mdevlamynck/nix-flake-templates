@@ -1,35 +1,48 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
   };
 
   outputs = { self, nixpkgs }:
     let
-      pkgs = import nixpkgs {
-        inherit system;
-      };
-
+      pkgs = import nixpkgs { inherit system; };
       system = "x86_64-linux";
       app = "app";
 
-      shellInputs = with pkgs; [
-      ];
-      appNativeBuildInputs = with pkgs; [
-      ];
-      appBuildInputs = appRuntimeInputs ++ (with pkgs; [
-      ]);
-      appRuntimeInputs = with pkgs; [
-      ];
+      nativeBuildInputs = with pkgs; [ ];
+      buildInputs = with pkgs; [ ];
     in
     {
-      devShells.${system}.${app} = pkgs.mkShell {
-        nativeBuildInputs = appNativeBuildInputs;
-        buildInputs = shellInputs ++ appBuildInputs;
+      devShells.${system}.default = pkgs.mkShell {
+        inputsFrom = [ self.packages.${system}.default ];
+        packages = [ ];
 
         shellHook = ''
-          export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath appRuntimeInputs}"
+          export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath buildInputs}"
         '';
       };
-      devShell.${system} = self.devShells.${system}.${app};
+
+      packages.${system} = {
+        default = self.packages.${system}.${app};
+        ${app} = pkgs.stdenv.mkDerivation {
+          pname = app;
+          version = "0.1.0";
+
+          src = ./.;
+
+          inherit nativeBuildInputs buildInputs;
+
+          postFixup = ''
+            patchelf $out/bin/${app} --add-rpath ${pkgs.lib.makeLibraryPath buildInputs}
+          '';
+        };
+      };
+
+      apps.${system} = {
+        default = self.apps.${system}.${app};
+        ${app} = { type = "app"; program = "${self.packages.${system}.${app}}/bin/${app}"; };
+      };
+
+      checks.${system}.build = self.packages.${system}.${app};
     };
 }

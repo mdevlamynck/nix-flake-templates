@@ -1,5 +1,6 @@
-# Rust build dir
-/target/
+# zig build dir
+/zig-cache/
+/zig-out/
 
 # Jetbrains
 /.idea/

@@ -1,42 +1,37 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
-    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = { self, nixpkgs, rust-overlay }:
+  outputs = { self, nixpkgs }:
     let
-      pkgs = import nixpkgs { inherit system; overlays = [ (import rust-overlay) ]; };
+      pkgs = import nixpkgs { inherit system; };
       system = "x86_64-linux";
       app = "app";
 
-      rust = pkgs.rust-bin.nightly.latest.default.override { extensions = [ "rust-src" "rust-analyzer" ]; };
-      rustPlatform = pkgs.makeRustPlatform { cargo = rust; rustc = rust; };
-
-      nativeBuildInputs = with pkgs; [ clang mold ];
-      buildInputs = with pkgs; [ cargo-nextest ];
+      nativeBuildInputs = with pkgs; [ ];
+      buildInputs = with pkgs; [ ];
     in
     {
       devShells.${system}.default = pkgs.mkShell {
-        inputsFrom = [ self.packages.${system}.default ];
-        packages = [ ];
+        inputsFrom = [ ];
+        packages = [ pkgs.zig ];
 
         shellHook = ''
           export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath buildInputs}"
-          ln -fsT ${rust} ./.direnv/rust
         '';
       };
 
       packages.${system} = {
         default = self.packages.${system}.${app};
-        ${app} = rustPlatform.buildRustPackage {
+        ${app} = pkgs.stdenv.mkDerivation {
           pname = app;
           version = "0.1.0";
 
           src = ./.;
-          cargoSha256 = "";
 
-          inherit nativeBuildInputs buildInputs;
+          nativeBuildInputs = [ pkgs.zig.hook ] ++ nativeBuildInputs;
+          inherit buildInputs;
 
           postFixup = ''
             patchelf $out/bin/${app} --add-rpath ${pkgs.lib.makeLibraryPath buildInputs}

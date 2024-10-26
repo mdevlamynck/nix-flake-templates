@@ -1,8 +1,0 @@
-# Rust build dir
-/target/
-
-# Jetbrains
-/.idea/
-
-# Nix
-/.direnv/
