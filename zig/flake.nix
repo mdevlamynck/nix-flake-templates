@@ -1,9 +1,10 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
   };
 
-  outputs = { self, nixpkgs }:
+  outputs =
+    { self, nixpkgs }:
     let
       pkgs = import nixpkgs { inherit system; };
       system = "x86_64-linux";
@@ -41,7 +42,10 @@
 
       apps.${system} = {
         default = self.apps.${system}.${app};
-        ${app} = { type = "app"; program = "${self.packages.${system}.${app}}/bin/${app}"; };
+        ${app} = {
+          type = "app";
+          program = "${self.packages.${system}.${app}}/bin/${app}";
+        };
       };
 
       checks.${system}.build = self.packages.${system}.${app};

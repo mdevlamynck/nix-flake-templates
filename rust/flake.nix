@@ -1,19 +1,38 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
     rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = { self, nixpkgs, rust-overlay }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      rust-overlay,
+    }:
     let
-      pkgs = import nixpkgs { inherit system; overlays = [ (import rust-overlay) ]; };
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ (import rust-overlay) ];
+      };
       system = "x86_64-linux";
       app = "app";
 
-      rust = pkgs.rust-bin.nightly.latest.default.override { extensions = [ "rust-src" "rust-analyzer" ]; };
-      rustPlatform = pkgs.makeRustPlatform { cargo = rust; rustc = rust; };
+      rust = pkgs.rust-bin.nightly.latest.default.override {
+        extensions = [
+          "rust-src"
+          "rust-analyzer"
+        ];
+      };
+      rustPlatform = pkgs.makeRustPlatform {
+        cargo = rust;
+        rustc = rust;
+      };
 
-      nativeBuildInputs = with pkgs; [ clang mold ];
+      nativeBuildInputs = with pkgs; [
+        clang
+        mold
+      ];
       buildInputs = with pkgs; [ cargo-nextest ];
     in
     {
@@ -46,7 +65,10 @@
 
       apps.${system} = {
         default = self.apps.${system}.${app};
-        ${app} = { type = "app"; program = "${self.packages.${system}.${app}}/bin/${app}"; };
+        ${app} = {
+          type = "app";
+          program = "${self.packages.${system}.${app}}/bin/${app}";
+        };
       };
 
       checks.${system}.build = self.packages.${system}.${app};
